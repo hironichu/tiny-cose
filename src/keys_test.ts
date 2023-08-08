@@ -72,6 +72,23 @@ describe("Generating keys", () => {
       assertEquals(exportedPublic.crv, EC2_CRV_P256);
     }
   });
+  it("Refuses a non-extractable key", async () => {
+    const key = await window.crypto.subtle.generateKey(
+      {
+        name: "ECDSA",
+        namedCurve: "P-256",
+      },
+      false,
+      ["sign", "verify"],
+    );
+    assertRejects(async () => {
+      await exportPrivateKey(
+        key.privateKey,
+        ENCODER.encode("test@example.com"),
+      );
+    })
+    // Public keys are still extractable
+  });
 
   it("Refuses a dynamically generated AES-CBC key", async () => {
     // Unsupported
@@ -84,8 +101,12 @@ describe("Generating keys", () => {
       ["encrypt", "decrypt"],
     );
 
+    // These aren't even private or public keys
     await assertRejects(async () => {
       await exportPrivateKey(key, ENCODER.encode("test@example.com"));
+    });
+    await assertRejects(async () => {
+      await exportPublicKey(key, ENCODER.encode("test@example.com"));
     });
   });
 });

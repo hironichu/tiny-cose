@@ -21,12 +21,9 @@ import {
 } from "./types.ts";
 
 function keyOps(
-  ops: string[] | undefined,
+  ops: string[],
   mac: boolean,
-): KEY_OPS_ALL[] | undefined {
-  if (!ops || ops.length == 0) {
-    return undefined;
-  }
+): KEY_OPS_ALL[] {
   const out: KEY_OPS_ALL[] = [];
   for (const op of ops) {
     if (op == "sign") {
@@ -56,9 +53,8 @@ export async function exportPrivateKey(
       kty: KTY_RSA,
       alg: RSASSA_PKCS1_v1_5_SHA_256,
       kid,
-      key_ops: keyOps(jwk.key_ops, false) as
-        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[]
-        | undefined,
+      key_ops: keyOps(jwk.key_ops || [], false) as
+        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
       n: decodeBase64Url(jwk.n),
       e: decodeBase64Url(jwk.e),
       p: decodeBase64Url(jwk.p),
@@ -74,9 +70,8 @@ export async function exportPrivateKey(
       alg: ECDSA_SHA_256,
       kid,
       crv: EC2_CRV_P256,
-      key_ops: keyOps(jwk.key_ops, false) as
-        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[]
-        | undefined,
+      key_ops: keyOps(jwk.key_ops || [], false) as
+        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
       x: decodeBase64Url(jwk.x),
       y: decodeBase64Url(jwk.y),
       d: decodeBase64Url(jwk.d),
@@ -90,18 +85,14 @@ export async function exportPublicKey(
   key: CryptoKey,
   kid?: Uint8Array,
 ): Promise<COSE_Public_Key> {
-  if (!key.extractable) {
-    throw new Error("Key is not extractable");
-  }
   const jwk = await crypto.subtle.exportKey("jwk", key);
   if (jwk.alg == "RS256" && jwk.n && jwk.e) {
     const out: RSASSA_PKCS1_v1_5_Public_COSE_Key = {
       kty: KTY_RSA,
       alg: RSASSA_PKCS1_v1_5_SHA_256,
       kid,
-      key_ops: keyOps(jwk.key_ops, false) as
-        | (typeof KEY_OP_VERIFY)[]
-        | undefined,
+      key_ops: keyOps(jwk.key_ops || [], false) as
+        | (typeof KEY_OP_VERIFY)[],
       n: decodeBase64Url(jwk.n),
       e: decodeBase64Url(jwk.e),
     };
@@ -112,9 +103,8 @@ export async function exportPublicKey(
       alg: ECDSA_SHA_256,
       kid,
       crv: EC2_CRV_P256,
-      key_ops: keyOps(jwk.key_ops, false) as
-        | (typeof KEY_OP_VERIFY)[]
-        | undefined,
+      key_ops: keyOps(jwk.key_ops || [], false) as
+        | (typeof KEY_OP_VERIFY)[],
       x: decodeBase64Url(jwk.x),
       y: decodeBase64Url(jwk.y),
     };
