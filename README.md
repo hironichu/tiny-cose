@@ -41,6 +41,7 @@ This implementation does not support:
 - Elliptic Curve keys with compressed points
 - `CryptoKeys` for symmetric encryption with AES
 - RSAES-OAEP
+- Private keys without public components
 
 Over time, this list may change.
 
