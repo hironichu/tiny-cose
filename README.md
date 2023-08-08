@@ -14,7 +14,8 @@ A very incomplete COSE library for use with other `tiny-*` libraries.
 This implementation provides:
 
 - Deserializing public and private key objects into JavaScript `CryptoKey`s
-- Serializing JavaScript `CryptoKey`s into public and private COSE key objects
+- Serializing JavaScript private and public `CryptoKey`s into public and private COSE key objects
+- Deserializing and serializing symmetric `CryptoKeys` into COSE key objects
 
 This implementation omits:
 
@@ -32,6 +33,14 @@ This implementation omits:
 - Key transport
 - ECDH
 - Key Derivation Functions
+
+This implementation does not support:
+
+ - RSA keys with multiple primes
+ - Elliptic Curve keys with compressed points
+ - `CryptoKeys` for symmetric encryption with AES
+ - RSAES-OAEP
+ 
 
 Over time, this list may change.
 

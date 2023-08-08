@@ -33,7 +33,7 @@ export interface ECDSA_Public_COSE_Key extends COSE_Key {
   crv: EC2_CRV_ALL;
   key_ops?: (typeof KEY_OP_VERIFY)[];
   x: Uint8Array;
-  y: Uint8Array | true | false;
+  y: Uint8Array;
 }
 
 export interface ECDSA_Private_COSE_Key extends COSE_Key {
@@ -42,7 +42,7 @@ export interface ECDSA_Private_COSE_Key extends COSE_Key {
   crv: EC2_CRV_ALL;
   key_ops?: (typeof KEY_OP_VERIFY | typeof KEY_OP_SIGN)[];
   x?: Uint8Array;
-  y?: Uint8Array | true | false;
+  y?: Uint8Array;
   d: Uint8Array;
 }
 
