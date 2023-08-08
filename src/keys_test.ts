@@ -104,7 +104,7 @@ describe("Generating keys", () => {
       assertNotEquals(exportedSymmetric.k, null);
     }
   });
-  it("Refuses a non-extractable key", async () => {
+  it("Refuses a non-extractable private key", async () => {
     const key = await window.crypto.subtle.generateKey(
       {
         name: "ECDSA",
@@ -119,14 +119,24 @@ describe("Generating keys", () => {
         ENCODER.encode("test@example.com"),
       );
     });
+    // Public keys are still extractable
+  });
+  it("Refuses a non-extractable symmetric key", async () => {
+    const key = await window.crypto.subtle.generateKey(
+      {
+        name: "HMAC",
+        hash: { name: "SHA-256" },
+      },
+      false,
+      ["sign", "verify"],
+    );
     assertRejects(async () => {
       await exportSymmetricKey(
-        key.privateKey,
+        key,
         ENCODER.encode("test@example.com"),
       );
     });
-    // Public keys are still extractable
-  });
+  })
 
   it("Refuses a dynamically generated AES-CBC key", async () => {
     // Unsupported

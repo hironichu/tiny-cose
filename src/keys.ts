@@ -34,8 +34,6 @@ function keyOps(
       out.push(mac ? KEY_OP_MAC_CREATE : KEY_OP_SIGN);
     } else if (op == "verify") {
       out.push(mac ? KEY_OP_MAC_VERIFY : KEY_OP_VERIFY);
-    } else {
-      throw new Error(`Key operation ${op} unsupported`);
     }
   }
   return out;
@@ -99,7 +97,7 @@ export async function exportPublicKey(
       kty: KTY_RSA,
       alg: RSASSA_PKCS1_v1_5_SHA_256,
       kid,
-      key_ops: keyOps(jwk.key_ops || [], false) as (typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(jwk.key_ops as string[], false) as (typeof KEY_OP_VERIFY)[],
       n: decodeBase64Url(jwk.n),
       e: decodeBase64Url(jwk.e),
     };
@@ -110,7 +108,7 @@ export async function exportPublicKey(
       alg: ECDSA_SHA_256,
       kid,
       crv: EC2_CRV_P256,
-      key_ops: keyOps(jwk.key_ops || [], false) as (typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(jwk.key_ops as string[], false) as (typeof KEY_OP_VERIFY)[],
       x: decodeBase64Url(jwk.x),
       y: decodeBase64Url(jwk.y),
     };
