@@ -122,7 +122,9 @@ export type COSE_Private_Key =
   | RSASSA_PKCS1_v1_5_Private_COSE_Key
   | RSASSA_PSS_Private_COSE_Key;
 
+export type COSE_Symmetric_Key = HMAC_COSE_Key;
+
 export type COSE_Key_ALL =
   | COSE_Public_Key
   | COSE_Private_Key
-  | HMAC_COSE_Key;
+  | COSE_Symmetric_Key;

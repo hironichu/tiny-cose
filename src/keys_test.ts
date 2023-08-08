@@ -1,16 +1,25 @@
 import {
   assertEquals,
+  assertNotEquals,
   assertRejects,
 } from "https://deno.land/std@0.195.0/assert/mod.ts";
 import { describe, it } from "https://deno.land/std@0.195.0/testing/bdd.ts";
-import { exportPrivateKey, exportPublicKey } from "./keys.ts";
+import {
+  exportPrivateKey,
+  exportPublicKey,
+  exportSymmetricKey,
+} from "./keys.ts";
 import {
   EC2_CRV_P256,
   ECDSA_SHA_256,
+  HMAC_SHA_256,
+  KEY_OP_MAC_CREATE,
+  KEY_OP_MAC_VERIFY,
   KEY_OP_SIGN,
   KEY_OP_VERIFY,
   KTY_EC2,
   KTY_RSA,
+  KTY_SYMMETRIC,
 } from "./constants.ts";
 
 const ENCODER = new TextEncoder();
@@ -70,6 +79,29 @@ describe("Generating keys", () => {
     assertEquals(exportedPublic.alg, ECDSA_SHA_256);
     if (exportedPublic.alg == ECDSA_SHA_256) {
       assertEquals(exportedPublic.crv, EC2_CRV_P256);
+    }
+  });
+  it("Export a dynamically HS256 generated key", async () => {
+    const key = await window.crypto.subtle.generateKey(
+      {
+        name: "HMAC",
+        hash: { name: "SHA-256" },
+      },
+      true,
+      ["sign", "verify"],
+    );
+    const exportedSymmetric = await exportSymmetricKey(
+      key,
+      ENCODER.encode("test@example.com"),
+    );
+    assertEquals(exportedSymmetric.kty, KTY_SYMMETRIC);
+    assertEquals(exportedSymmetric.key_ops, [
+      KEY_OP_MAC_CREATE,
+      KEY_OP_MAC_VERIFY,
+    ]);
+    assertEquals(exportedSymmetric.alg, HMAC_SHA_256);
+    if (exportedSymmetric.alg == HMAC_SHA_256) {
+      assertNotEquals(exportedSymmetric.k, null);
     }
   });
   it("Refuses a non-extractable key", async () => {
