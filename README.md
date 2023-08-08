@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/github/actions/workflow/status/levischuck/tiny-cose/build.yml?branch=main)](https://github.com/LeviSchuck/tiny-cose/actions)
 [![](https://img.shields.io/codecov/c/gh/levischuck/tiny-cose?style=flat-square)](https://codecov.io/gh/levischuck/tiny-cose)
-[![](https://badge.fury.io/js/@levischuck%2Ftiny-cose.svg)](https://www.npmjs.com/package/@levischuck/tiny-cose)
+[![](https://img.shields.io/github/v/tag/levischuck/tiny-cose?label=npm&logo=npm&style=flat-square)](https://www.npmjs.com/package/@levischuck/tiny-cose)
 [![](https://img.shields.io/github/v/tag/levischuck/tiny-cose?label=version&logo=deno&style=flat-square)](https://deno.land/x/tiny_cose)
 [![](https://img.shields.io/github/license/levischuck/tiny-cose)](https://github.com/LeviSchuck/tiny-cose/blob/main/LICENSE.txt)
 ![](https://img.shields.io/bundlephobia/min/%40levischuck/tiny-cose)
