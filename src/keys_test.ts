@@ -86,7 +86,7 @@ describe("Generating keys", () => {
         key.privateKey,
         ENCODER.encode("test@example.com"),
       );
-    })
+    });
     // Public keys are still extractable
   });
 

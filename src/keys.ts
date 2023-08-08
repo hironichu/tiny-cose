@@ -53,8 +53,10 @@ export async function exportPrivateKey(
       kty: KTY_RSA,
       alg: RSASSA_PKCS1_v1_5_SHA_256,
       kid,
-      key_ops: keyOps(jwk.key_ops || [], false) as
-        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(
+        jwk.key_ops || [],
+        false,
+      ) as (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
       n: decodeBase64Url(jwk.n),
       e: decodeBase64Url(jwk.e),
       p: decodeBase64Url(jwk.p),
@@ -70,8 +72,10 @@ export async function exportPrivateKey(
       alg: ECDSA_SHA_256,
       kid,
       crv: EC2_CRV_P256,
-      key_ops: keyOps(jwk.key_ops || [], false) as
-        | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(
+        jwk.key_ops || [],
+        false,
+      ) as (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
       x: decodeBase64Url(jwk.x),
       y: decodeBase64Url(jwk.y),
       d: decodeBase64Url(jwk.d),
@@ -91,8 +95,7 @@ export async function exportPublicKey(
       kty: KTY_RSA,
       alg: RSASSA_PKCS1_v1_5_SHA_256,
       kid,
-      key_ops: keyOps(jwk.key_ops || [], false) as
-        | (typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(jwk.key_ops || [], false) as (typeof KEY_OP_VERIFY)[],
       n: decodeBase64Url(jwk.n),
       e: decodeBase64Url(jwk.e),
     };
@@ -103,8 +106,7 @@ export async function exportPublicKey(
       alg: ECDSA_SHA_256,
       kid,
       crv: EC2_CRV_P256,
-      key_ops: keyOps(jwk.key_ops || [], false) as
-        | (typeof KEY_OP_VERIFY)[],
+      key_ops: keyOps(jwk.key_ops || [], false) as (typeof KEY_OP_VERIFY)[],
       x: decodeBase64Url(jwk.x),
       y: decodeBase64Url(jwk.y),
     };
