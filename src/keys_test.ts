@@ -136,7 +136,7 @@ describe("Generating keys", () => {
         ENCODER.encode("test@example.com"),
       );
     });
-  })
+  });
 
   it("Refuses a dynamically generated AES-CBC key", async () => {
     // Unsupported
