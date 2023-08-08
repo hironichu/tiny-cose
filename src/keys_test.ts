@@ -119,6 +119,12 @@ describe("Generating keys", () => {
         ENCODER.encode("test@example.com"),
       );
     });
+    assertRejects(async () => {
+      await exportSymmetricKey(
+        key.privateKey,
+        ENCODER.encode("test@example.com"),
+      );
+    });
     // Public keys are still extractable
   });
 
@@ -134,11 +140,17 @@ describe("Generating keys", () => {
     );
 
     // These aren't even private or public keys
-    await assertRejects(async () => {
+    assertRejects(async () => {
       await exportPrivateKey(key, ENCODER.encode("test@example.com"));
     });
-    await assertRejects(async () => {
+    assertRejects(async () => {
       await exportPublicKey(key, ENCODER.encode("test@example.com"));
+    });
+    assertRejects(async () => {
+      await exportSymmetricKey(
+        key,
+        ENCODER.encode("test@example.com"),
+      );
     });
   });
 });
