@@ -50,6 +50,31 @@ describe("Generating keys", () => {
     assertEquals(exportedPublic.key_ops, [KEY_OP_VERIFY]);
   });
 
+  it("Export a dynamically PS256 generated key", async () => {
+    const key = await window.crypto.subtle.generateKey(
+      {
+        name: "RSA-PSS",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        hash: { name: "SHA-256" },
+      },
+      true,
+      ["sign", "verify"],
+    );
+    const exportedPrivate = await exportPrivateKey(
+      key.privateKey,
+      ENCODER.encode("test@example.com"),
+    );
+    assertEquals(exportedPrivate.kty, KTY_RSA);
+    assertEquals(exportedPrivate.key_ops, [KEY_OP_SIGN]);
+    const exportedPublic = await exportPublicKey(
+      key.publicKey,
+      ENCODER.encode("test@example.com"),
+    );
+    assertEquals(exportedPublic.kty, KTY_RSA);
+    assertEquals(exportedPublic.key_ops, [KEY_OP_VERIFY]);
+  });
+
   it("Export a dynamically ES256 generated key", async () => {
     const key = await window.crypto.subtle.generateKey(
       {

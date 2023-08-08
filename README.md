@@ -16,7 +16,7 @@ This implementation provides:
 - Deserializing public and private key objects into JavaScript `CryptoKey`s
 - Serializing JavaScript private and public `CryptoKey`s into public and private
   COSE key objects
-- Deserializing and serializing symmetric `CryptoKeys` into COSE key objects
+- Deserializing and serializing symmetric `CryptoKey`s into COSE key objects
 
 This implementation omits:
 
@@ -39,7 +39,7 @@ This implementation does not support:
 
 - RSA keys with multiple primes
 - Elliptic Curve keys with compressed points
-- `CryptoKeys` for symmetric encryption with AES
+- `CryptoKey`s for symmetric encryption with AES
 - RSAES-OAEP
 - Private keys without public components
 
