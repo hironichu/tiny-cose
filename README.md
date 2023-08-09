@@ -42,6 +42,8 @@ This implementation does not support:
 - `CryptoKey`s for symmetric encryption with AES
 - RSAES-OAEP
 - Private keys without public components
+- ES512 / Curve P-521, see Deno Issue
+  [P-521 curves in WebCrypto](https://github.com/denoland/deno/issues/13449)
 
 Over time, this list may change.
 
