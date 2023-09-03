@@ -8,6 +8,7 @@ import {
   exportPrivateKey,
   exportPublicKey,
   exportSymmetricKey,
+  importSymmetricKey,
 } from "./keys.ts";
 import {
   EC2_CRV_P256,
@@ -31,6 +32,12 @@ import {
   RSASSA_PSS_SHA_384,
   RSASSA_PSS_SHA_512,
 } from "./constants.ts";
+import { CBORType } from "./deps.ts";
+import {
+  decodeBase64,
+  decodeBase64Url,
+} from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
+import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.1/cbor/cbor.ts";
 
 const ENCODER = new TextEncoder();
 
@@ -392,5 +399,36 @@ describe("Generating keys", () => {
         ENCODER.encode("test@example.com"),
       );
     });
+  });
+});
+
+// Keys come from https://github.com/LeviSchuck/cose-examples/tree/main
+
+function decode(b64url: string): CBORType {
+  const bytes = decodeBase64Url(b64url);
+  const cbor = decodeCBOR(bytes);
+  return cbor;
+}
+
+describe("Importing keys", () => {
+  // it("Imports a RS256 Public Key", async () => {
+  //   const cbor = decode('pgEDAlFoZWxsb0BleGFtcGxlLmNvbQSBAgM5AQAhQwEAASBZAQC39rfzb7mCsntRDoHf687SeuTxrQxO7A-sPfbmwS_zwLAAW3OGfhZuya8qDxoUF5ybosh74yEWOPKXZmE-ac-N8UQazh1OItA5aJILDI_gWYtkqi4-B08v-IgF_s1Au-fLll6gsQtvTOSBs6-ZYSkdVKNsLDUrp_D98nrLzgV4vydSEvwqlbt_Ykxgw6x_5ZhJIzuCvf0nMBYDr7dxQcEvxYJSARZIFNuMqJnc5iDEzCnT4C8sJOGxJqTV62nOnnvZMVEIF_zzXVWZgTPqi7D3RmCpsmD0C2lee1dV1lNf8v7dRRExESk4Wrfpm_Bdp8vFrzevWmTJyW8ezGWlbGCF');
+  //   const key =
+  //   const imported = await importPublicKey()
+  // })
+  it("Imports an HS256 key", async () => {
+    const cbor = decode(
+      "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
+    );
+    const { key } = await importSymmetricKey(cbor, true);
+    const signature = await crypto.subtle.sign(
+      { name: "HMAC" },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assertEquals(
+      new Uint8Array(signature),
+      decodeBase64("Jl7zJByUUrh1y5b94fES52I2SwgjCmSywcvuvjywS4Y="),
+    );
   });
 });
