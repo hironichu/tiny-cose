@@ -443,10 +443,17 @@ describe("Importing keys", () => {
     );
   });
   it("Unsupported Symmetric algorithm", () => {
-    const cbor = decode(
-      "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
-    );
     assertRejects(async () => {
+      const cbor = decode(
+        "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
+      );
+      (cbor as Map<number, CBORType>).set(3, RSASSA_PKCS1_v1_5_SHA_256);
+      await importSymmetricKey(cbor, true);
+    });
+    assertRejects(async () => {
+      const cbor = decode(
+        "pQEBIAYhWCBMBNC6kELz0E-_DMukE1opN0PlMpI0BHryQ-Q-TuvG8CNYIAe8jNQE0LJjAwBNCF1rBPRWOH6bPvS6jgOgI76ZJyl6BIEB",
+      );
       (cbor as Map<number, CBORType>).set(3, RSASSA_PKCS1_v1_5_SHA_256);
       await importSymmetricKey(cbor, true);
     });
