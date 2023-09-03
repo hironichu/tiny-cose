@@ -579,7 +579,7 @@ export async function importSymmetricKey(
     key_ops,
     k: encodeBase64Url(key.k),
   };
-  const hashName = HMAC_SHA_256
+  const hashName = key.alg == HMAC_SHA_256
     ? "SHA-256"
     : key.alg == HMAC_SHA_384
     ? "SHA-384"

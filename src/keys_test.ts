@@ -431,4 +431,34 @@ describe("Importing keys", () => {
       decodeBase64("Jl7zJByUUrh1y5b94fES52I2SwgjCmSywcvuvjywS4Y="),
     );
   });
+  it("Imports an HS384 key", async () => {
+    const cbor = decode(
+      "pQEEIFgwkmqjI1J0ZqSTLs27o7gkTDM4jp7z2abse2C3nXm1C0OzPrr9beK4H5tt5mvZFhkbAlFoZWxsb0BleGFtcGxlLmNvbQSCCQoDBg==",
+    );
+    const { key } = await importSymmetricKey(cbor, true);
+    const signature = await crypto.subtle.sign(
+      { name: "HMAC" },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assertEquals(
+      new Uint8Array(signature),
+      decodeBase64("QYQHWmLwz8tZaadmRuitBUmUjbX+TM+rvfAvlVutvDIoXyejSIylCm3Bwpzcftst"),
+    );
+  });
+  it("Imports an HS512 key", async () => {
+    const cbor = decode(
+      "pQEEIFhAIZEMIfF4qzuGFf_vWAXIq9VUUG7Gtva8ry3Ymci4U0yYVEMokdsp86eNUC5LjOgyiL-70t0OlohycL1YmC1qCAJRaGVsbG9AZXhhbXBsZS5jb20EggkKAwc=",
+    );
+    const { key } = await importSymmetricKey(cbor, true);
+    const signature = await crypto.subtle.sign(
+      { name: "HMAC" },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assertEquals(
+      new Uint8Array(signature),
+      decodeBase64("aqNllE9QEqrc5+rMPyWGsR+cRbC+A57DAKNw5phJS2RWYdfdWFAknHfNejTixoBgSs/gHlsfkioKjvrI8B67BQ=="),
+    );
+  });
 });
