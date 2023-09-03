@@ -443,7 +443,9 @@ describe("Importing keys", () => {
     );
     assertEquals(
       new Uint8Array(signature),
-      decodeBase64("QYQHWmLwz8tZaadmRuitBUmUjbX+TM+rvfAvlVutvDIoXyejSIylCm3Bwpzcftst"),
+      decodeBase64(
+        "QYQHWmLwz8tZaadmRuitBUmUjbX+TM+rvfAvlVutvDIoXyejSIylCm3Bwpzcftst",
+      ),
     );
   });
   it("Imports an HS512 key", async () => {
@@ -458,7 +460,9 @@ describe("Importing keys", () => {
     );
     assertEquals(
       new Uint8Array(signature),
-      decodeBase64("aqNllE9QEqrc5+rMPyWGsR+cRbC+A57DAKNw5phJS2RWYdfdWFAknHfNejTixoBgSs/gHlsfkioKjvrI8B67BQ=="),
+      decodeBase64(
+        "aqNllE9QEqrc5+rMPyWGsR+cRbC+A57DAKNw5phJS2RWYdfdWFAknHfNejTixoBgSs/gHlsfkioKjvrI8B67BQ==",
+      ),
     );
   });
 });
