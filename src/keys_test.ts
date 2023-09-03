@@ -38,7 +38,6 @@ import {
   decodeBase64Url,
 } from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
 import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.1/cbor/cbor.ts";
-import { assertThrows } from "https://deno.land/std@0.195.0/assert/assert_throws.ts";
 
 const ENCODER = new TextEncoder();
 
