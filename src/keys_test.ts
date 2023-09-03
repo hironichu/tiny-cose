@@ -38,6 +38,7 @@ import {
   decodeBase64Url,
 } from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
 import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.1/cbor/cbor.ts";
+import { assertThrows } from "https://deno.land/std@0.195.0/assert/assert_throws.ts";
 
 const ENCODER = new TextEncoder();
 
@@ -430,6 +431,26 @@ describe("Importing keys", () => {
       new Uint8Array(signature),
       decodeBase64("Jl7zJByUUrh1y5b94fES52I2SwgjCmSywcvuvjywS4Y="),
     );
+    (cbor as Map<number, CBORType>).delete(4);
+    const skey2 = await importSymmetricKey(cbor, false);
+    const signature2 = await crypto.subtle.sign(
+      { name: "HMAC" },
+      skey2.key,
+      ENCODER.encode("Hello world"),
+    );
+    assertEquals(
+      new Uint8Array(signature2),
+      decodeBase64("Jl7zJByUUrh1y5b94fES52I2SwgjCmSywcvuvjywS4Y="),
+    );
+  });
+  it("Unsupported Symmetric algorithm", () => {
+    const cbor = decode(
+      "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
+    );
+    assertRejects(async () => {
+      (cbor as Map<number, CBORType>).set(3, RSASSA_PKCS1_v1_5_SHA_256);
+      await importSymmetricKey(cbor, true);
+    });
   });
   it("Imports an HS384 key", async () => {
     const cbor = decode(
