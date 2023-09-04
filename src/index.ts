@@ -9,4 +9,7 @@ export {
   exportPrivateKey,
   exportPublicKey,
   exportSymmetricKey,
+  importPrivateKey,
+  importPublicKey,
+  importSymmetricKey,
 } from "./keys.ts";
