@@ -2,7 +2,6 @@ import { encodeBase64Url } from "https://deno.land/x/tiny_encodings@0.2.1/encodi
 import {
   EC2_CRV_P256,
   EC2_CRV_P384,
-  EC2_CRV_P521,
   ECDSA_SHA_256,
   ECDSA_SHA_384,
   ECDSA_SHA_512,
@@ -16,10 +15,8 @@ import {
   KEY_OP_VERIFY,
   KEY_OPS_ALL,
   KTY_EC2,
-  KTY_OKP,
   KTY_RSA,
   KTY_SYMMETRIC,
-  OKP_CRV_ED25519,
   RSASSA_PKCS1_v1_5_SHA_256,
   RSASSA_PKCS1_v1_5_SHA_384,
   RSASSA_PKCS1_v1_5_SHA_512,
@@ -34,17 +31,13 @@ import {
   COSESymmetricKey,
   ECDSA_Private_COSE_Key,
   ECDSA_Public_COSE_Key,
-  EDDSA_Private_COSE_Key,
-  EDDSA_Public_COSE_Key,
   HMAC_COSE_Key,
-  RSAPrivateKey,
-  RSAPublicKey,
   RSASSA_PKCS1_v1_5_Private_COSE_Key,
   RSASSA_PKCS1_v1_5_Public_COSE_Key,
   RSASSA_PSS_Private_COSE_Key,
   RSASSA_PSS_Public_COSE_Key,
 } from "./types.ts";
-import { COSEKeyAll } from "./index.ts";
+import { cborTypeToCOSEKey } from "./parse.ts";
 
 function keyOps(
   ops: string[],
@@ -179,12 +172,109 @@ export async function exportPrivateKey(
   throw new Error(`Unsupported key ${jwk.alg}`);
 }
 
-// deno-lint-ignore require-await
 export async function importPrivateKey(
-  _key: COSEPrivateKey,
-  _extractable?: boolean,
+  cbor: CBORType,
+  extractable?: boolean,
 ): Promise<ImportedKey> {
-  throw new Error("Unimplemented");
+  const key = cborTypeToCOSEKey(cbor);
+  const key_ops: KeyUsage[] = [];
+  if (key.key_ops) {
+    for (const op of key.key_ops) {
+      if (op == KEY_OP_VERIFY) {
+        key_ops.push("verify");
+      } else if (op == KEY_OP_SIGN) {
+        key_ops.push("sign");
+      }
+    }
+  } else {
+    key_ops.push("verify");
+    key_ops.push("sign");
+  }
+
+  if (
+    key.alg == RSASSA_PKCS1_v1_5_SHA_256 ||
+    key.alg == RSASSA_PKCS1_v1_5_SHA_384 ||
+    key.alg == RSASSA_PKCS1_v1_5_SHA_512 || key.alg == RSASSA_PSS_SHA_256 ||
+    key.alg == RSASSA_PSS_SHA_384 || key.alg == RSASSA_PSS_SHA_512
+  ) {
+    const privateKey = key as
+      | RSASSA_PKCS1_v1_5_Private_COSE_Key
+      | RSASSA_PSS_Private_COSE_Key;
+    let alg: string;
+    let hashName: string;
+    let name: string;
+    switch (key.alg) {
+      case RSASSA_PKCS1_v1_5_SHA_256:
+        alg = "RS256";
+        hashName = "SHA-256";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PKCS1_v1_5_SHA_384:
+        alg = "RS384";
+        hashName = "SHA-384";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PKCS1_v1_5_SHA_512:
+        alg = "RS512";
+        hashName = "SHA-512";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PSS_SHA_256:
+        alg = "PS256";
+        hashName = "SHA-256";
+        name = "RSA-PSS";
+        break;
+      case RSASSA_PSS_SHA_384:
+        alg = "PS384";
+        hashName = "SHA-384";
+        name = "RSA-PSS";
+        break;
+      case RSASSA_PSS_SHA_512:
+        alg = "PS512";
+        hashName = "SHA-512";
+        name = "RSA-PSS";
+        break;
+    }
+    if (
+      !privateKey.d || !privateKey.d || !privateKey.q || !privateKey.dP ||
+      !privateKey.dQ || !privateKey.qInv
+    ) {
+      throw new Error("Cannot import RSA private key, components are missing");
+    }
+    const jwk: JsonWebKey = {
+      alg,
+      kty: "RSA",
+      key_ops,
+      e: encodeBase64Url(key.e),
+      n: encodeBase64Url(key.n),
+      d: encodeBase64Url(privateKey.d),
+      p: encodeBase64Url(privateKey.p),
+      q: encodeBase64Url(privateKey.q),
+      dp: encodeBase64Url(privateKey.dP),
+      dq: encodeBase64Url(privateKey.dQ),
+      qi: encodeBase64Url(privateKey.qInv),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      {
+        name,
+        hash: { name: hashName },
+      },
+      extractable || false,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
+  } else if (
+    key.alg == ECDSA_SHA_256 || key.alg == ECDSA_SHA_384 ||
+    key.alg == ECDSA_SHA_512
+  ) {
+    throw new Error("Unimplemented");
+  } else if (key.alg == EDDSA) {
+    throw new Error("Unimplemented");
+  } else {
+    throw new Error("Key algorithm not supported");
+  }
 }
 
 export async function exportPublicKey(
@@ -247,9 +337,88 @@ export async function exportPublicKey(
   throw new Error(`Unsupported key ${jwk.alg}`);
 }
 
-// deno-lint-ignore require-await
-export async function importPublicKey(_cbor: CBORType): Promise<ImportedKey> {
-  throw new Error("Unimplemented");
+export async function importPublicKey(cbor: CBORType): Promise<ImportedKey> {
+  const key = cborTypeToCOSEKey(cbor);
+  const key_ops: KeyUsage[] = [];
+  if (key.key_ops) {
+    for (const op of key.key_ops) {
+      if (op == KEY_OP_VERIFY) {
+        key_ops.push("verify");
+      }
+    }
+  } else {
+    key_ops.push("verify");
+  }
+
+  if (
+    key.alg == RSASSA_PKCS1_v1_5_SHA_256 ||
+    key.alg == RSASSA_PKCS1_v1_5_SHA_384 ||
+    key.alg == RSASSA_PKCS1_v1_5_SHA_512 || key.alg == RSASSA_PSS_SHA_256 ||
+    key.alg == RSASSA_PSS_SHA_384 || key.alg == RSASSA_PSS_SHA_512
+  ) {
+    let alg: string;
+    let hashName: string;
+    let name: string;
+    switch (key.alg) {
+      case RSASSA_PKCS1_v1_5_SHA_256:
+        alg = "RS256";
+        hashName = "SHA-256";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PKCS1_v1_5_SHA_384:
+        alg = "RS384";
+        hashName = "SHA-384";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PKCS1_v1_5_SHA_512:
+        alg = "RS512";
+        hashName = "SHA-512";
+        name = "RSASSA-PKCS1-v1_5";
+        break;
+      case RSASSA_PSS_SHA_256:
+        alg = "PS256";
+        hashName = "SHA-256";
+        name = "RSA-PSS";
+        break;
+      case RSASSA_PSS_SHA_384:
+        alg = "PS384";
+        hashName = "SHA-384";
+        name = "RSA-PSS";
+        break;
+      case RSASSA_PSS_SHA_512:
+        alg = "PS512";
+        hashName = "SHA-512";
+        name = "RSA-PSS";
+        break;
+    }
+    const jwk: JsonWebKey = {
+      alg,
+      kty: "RSA",
+      key_ops,
+      e: encodeBase64Url(key.e),
+      n: encodeBase64Url(key.n),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      {
+        name,
+        hash: { name: hashName },
+      },
+      true,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
+  } else if (
+    key.alg == ECDSA_SHA_256 || key.alg == ECDSA_SHA_384 ||
+    key.alg == ECDSA_SHA_512
+  ) {
+    throw new Error("Unimplemented");
+  } else if (key.alg == EDDSA) {
+    throw new Error("Unimplemented");
+  } else {
+    throw new Error("Key algorithm not supported");
+  }
 }
 
 export async function exportSymmetricKey(
@@ -281,265 +450,6 @@ export async function exportSymmetricKey(
     return out;
   }
   throw new Error(`Unsupported key ${jwk.alg}`);
-}
-
-function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
-  if (!(cbor instanceof Map)) {
-    throw new Error("Unsupported CBOR input");
-  }
-  const kid = cbor.get(2);
-  const alg = cbor.get(3);
-  const key_ops = cbor.get(4);
-  const kty = cbor.get(1);
-  let keyOps: undefined | KEY_OPS_ALL[];
-  if (kid && !(kid instanceof Uint8Array)) {
-    throw new Error('Unsupported "kid"');
-  }
-  if (key_ops) {
-    if (!Array.isArray(key_ops)) {
-      throw new Error('Unsupported "key_ops"');
-    }
-    keyOps = [];
-    for (const op of key_ops) {
-      if (
-        op == KEY_OP_MAC_CREATE || op == KEY_OP_MAC_VERIFY ||
-        op == KEY_OP_SIGN || op == KEY_OP_VERIFY
-      ) {
-        keyOps.push(op);
-      } else {
-        throw new Error(`Unsupported "key_ops" operation ${op}`);
-      }
-    }
-  }
-  if (
-    kty == KTY_RSA &&
-    (alg == RSASSA_PKCS1_v1_5_SHA_256 || alg == RSASSA_PKCS1_v1_5_SHA_384 ||
-      alg == RSASSA_PKCS1_v1_5_SHA_512 || alg == RSASSA_PSS_SHA_256 ||
-      alg == RSASSA_PSS_SHA_384 || alg == RSASSA_PSS_SHA_512)
-  ) {
-    const n = cbor.get(-1);
-    const e = cbor.get(-2);
-
-    if (!(n instanceof Uint8Array) || !(e instanceof Uint8Array)) {
-      throw new Error("Malformed COSE key");
-    }
-    const publicKey: RSAPublicKey = {
-      n,
-      e,
-    };
-    const d = cbor.get(-3);
-    const p = cbor.get(-4);
-    const q = cbor.get(-5);
-    const dP = cbor.get(-6);
-    const dQ = cbor.get(-7);
-    const qInv = cbor.get(-8);
-    if (d || p || q || dP || dQ || qInv) {
-      if (
-        !(d instanceof Uint8Array) || !(p instanceof Uint8Array) ||
-        !(q instanceof Uint8Array) || !(dP instanceof Uint8Array) ||
-        !(dQ instanceof Uint8Array) || !(qInv instanceof Uint8Array)
-      ) {
-        throw new Error("Malformed COSE key");
-      }
-      const privateKey: RSAPrivateKey = {
-        ...publicKey,
-        d,
-        p,
-        q,
-        dP,
-        dQ,
-        qInv,
-      };
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_SIGN && op != KEY_OP_VERIFY) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on private RSA key`,
-            );
-          }
-        }
-      }
-
-      const result:
-        | RSASSA_PKCS1_v1_5_Private_COSE_Key
-        | RSASSA_PSS_Private_COSE_Key = {
-          ...privateKey,
-          alg,
-          kty: KTY_RSA,
-          kid: kid as Uint8Array,
-          key_ops: keyOps as
-            | (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[]
-            | undefined,
-        };
-      return result;
-    } else {
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_VERIFY) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on public RSA key`,
-            );
-          }
-        }
-      }
-      const result:
-        | RSASSA_PKCS1_v1_5_Public_COSE_Key
-        | RSASSA_PSS_Public_COSE_Key = {
-          ...publicKey,
-          alg,
-          kty: KTY_RSA,
-          kid: kid as Uint8Array,
-          key_ops: keyOps as (typeof KEY_OP_VERIFY)[] | undefined,
-        };
-      return result;
-    }
-  } else if (
-    kty == KTY_EC2 &&
-    (alg == ECDSA_SHA_256 || alg == ECDSA_SHA_384 || alg == ECDSA_SHA_512)
-  ) {
-    const crv = cbor.get(-1); // Elliptic curve
-    const x = cbor.get(-2); // X coordinate
-    const y = cbor.get(-3); // Y coordinate
-
-    if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array)) {
-      throw new Error("Malformed COSE key");
-    }
-    if (crv != EC2_CRV_P256 && crv != EC2_CRV_P384 && crv != EC2_CRV_P521) {
-      throw new Error(`Unsupported elliptic curve ${crv}`);
-    }
-    const d = cbor.get(-4); // Private key
-    if (d) {
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_VERIFY && op != KEY_OP_SIGN) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on private EC2 key`,
-            );
-          }
-        }
-      }
-      if (!(d instanceof Uint8Array)) {
-        throw new Error("Malformed COSE key");
-      }
-      const privateKey: ECDSA_Private_COSE_Key = {
-        x,
-        y,
-        d,
-        alg,
-        kty: KTY_EC2,
-        kid: kid as Uint8Array,
-        key_ops: keyOps as
-          | (typeof KEY_OP_VERIFY | typeof KEY_OP_VERIFY)[]
-          | undefined,
-        crv,
-      };
-      return privateKey;
-    } else {
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_VERIFY) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on public EC2 key`,
-            );
-          }
-        }
-      }
-      const publicKey: ECDSA_Public_COSE_Key = {
-        x,
-        y,
-        alg,
-        kty: KTY_EC2,
-        kid: kid as Uint8Array,
-        key_ops: keyOps as (typeof KEY_OP_VERIFY)[] | undefined,
-        crv,
-      };
-      return publicKey;
-    }
-  } else if (
-    kty == KTY_SYMMETRIC &&
-    (alg == HMAC_SHA_256 || alg == HMAC_SHA_384 || alg == HMAC_SHA_512)
-  ) {
-    const k = cbor.get(-1); // Key value
-    if (!(k instanceof Uint8Array)) {
-      throw new Error("Malformed COSE key");
-    }
-    if (keyOps) {
-      for (const op of keyOps) {
-        if (op != KEY_OP_MAC_VERIFY && op != KEY_OP_MAC_CREATE) {
-          throw new Error(
-            `Unsupported "key_ops" operation ${op} on public EC2 key`,
-          );
-        }
-      }
-    }
-
-    const symmetricKey: HMAC_COSE_Key = {
-      k,
-      alg,
-      kty: KTY_SYMMETRIC,
-      kid: kid as Uint8Array,
-      key_ops: keyOps as
-        | (typeof KEY_OP_MAC_CREATE | typeof KEY_OP_MAC_VERIFY)[]
-        | undefined,
-    };
-    return symmetricKey;
-  } else if (kty == KTY_OKP && alg == EDDSA) {
-    const crv = cbor.get(-1); // Elliptic curve
-    const x = cbor.get(-2); // Public X coordinate
-
-    if (!(x instanceof Uint8Array)) {
-      throw new Error("Malformed COSE key");
-    }
-    if (crv != OKP_CRV_ED25519) {
-      throw new Error(`Unsupported elliptic curve ${crv}`);
-    }
-    const d = cbor.get(-4); // Private key
-    if (d) {
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_VERIFY && op != KEY_OP_SIGN) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on private EdDSA key`,
-            );
-          }
-        }
-      }
-      if (!(d instanceof Uint8Array)) {
-        throw new Error("Malformed COSE key");
-      }
-      const privateKey: EDDSA_Private_COSE_Key = {
-        x,
-        d,
-        alg,
-        kty: KTY_OKP,
-        kid: kid as Uint8Array,
-        key_ops: keyOps as [typeof KEY_OP_VERIFY] | undefined,
-        crv,
-      };
-      return privateKey;
-    } else {
-      if (keyOps) {
-        for (const op of keyOps) {
-          if (op != KEY_OP_VERIFY) {
-            throw new Error(
-              `Unsupported "key_ops" operation ${op} on public EdDSA key`,
-            );
-          }
-        }
-      }
-      const publicKey: EDDSA_Public_COSE_Key = {
-        x,
-        alg,
-        kty: KTY_OKP,
-        kid: kid as Uint8Array,
-        key_ops: keyOps as [typeof KEY_OP_VERIFY] | undefined,
-        crv,
-      };
-      return publicKey;
-    }
-  } else {
-    throw new Error("Unsupported algorithm");
-  }
 }
 
 export async function importSymmetricKey(

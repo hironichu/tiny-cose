@@ -1,4 +1,5 @@
 import {
+  assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
@@ -8,6 +9,8 @@ import {
   exportPrivateKey,
   exportPublicKey,
   exportSymmetricKey,
+  importPrivateKey,
+  importPublicKey,
   importSymmetricKey,
 } from "./keys.ts";
 import {
@@ -491,5 +494,32 @@ describe("Importing keys", () => {
         "aqNllE9QEqrc5+rMPyWGsR+cRbC+A57DAKNw5phJS2RWYdfdWFAknHfNejTixoBgSs/gHlsfkioKjvrI8B67BQ==",
       ),
     );
+  });
+  it("Imports a RS256 private key", async () => {
+    const cbor = decode(
+      "rAEDIUMBAAEgWQEAt_a382-5grJ7UQ6B3-vO0nrk8a0MTuwPrD325sEv88CwAFtzhn4WbsmvKg8aFBecm6LIe-MhFjjyl2ZhPmnPjfFEGs4dTiLQOWiSCwyP4FmLZKouPgdPL_iIBf7NQLvny5ZeoLELb0zkgbOvmWEpHVSjbCw1K6fw_fJ6y84FeL8nUhL8KpW7f2JMYMOsf-WYSSM7gr39JzAWA6-3cUHBL8WCUgEWSBTbjKiZ3OYgxMwp0-AvLCThsSak1etpzp572TFRCBf8811VmYEz6ouw90ZgqbJg9AtpXntXVdZTX_L-3UURMREpOFq36ZvwXafLxa83r1pkyclvHsxlpWxghSJZAQAnk1ND8tFXGVP3nlYYyLcr5yXJCxgGg3ikrojm4AEToGyMix_5ezcSut8svmZ3E5RMlBKqujREPliL8wmw_lzZFaH33UcHJ-yhKQqgB2INWt4muAiuLe7ebEpA9e2Mg1AMp2rwiV3jIgjXkUMRzUnlxi9JBmKi42RwEUHTBd19-c3TRysGLaORsPcqpEJlFKvTNe8aeCne5uECQpvxgdDiMKU-nn3xVOEkoF6z62Lt9xbsoop8BNXtm2a9YIv-auUkOdcycOyfGhoQgZgXUF6gTUxtE6OwJwTrjXmXe1PWglstTIEKurhQcDm2AWW4oTddFtCjej_UsSie62kJnN5ZI1iA6lNZIHurpQa4KB1gAJg-G7PPAFChQjFSWSj2z374hEKDaUf5LLySHU3scaTUpXESOV6dma_8F_Z1-gQzS7jkDaWtLmEzzAhaAHcU1dvEBkSCOm3vZtP_9gH9-LNCfpfW8cImhWpe4N3XgMAhej9cY43443mu3gOAwixXjCAOUQ0kWIDI-tckE3WY9bKORlBmqw50rq50k10-Je3vmjqPvlwPdJYnvfgDn16L3dh49fWRLrYtmY2lOyrWE9aPfKZnDU9FqFaTH9Gsd3Z8Ov4EY03xkH_kAXcgtsR8FtpAoDWYp9cFhIxhQXy6_Sr_mHAOuBvqeZgOV8NVqMFWI3fHRIA_WSVYgGEJyysMi_R3Z-QU5iDY6z-Fov-6ZE2JJ1UNBcjACCKdeNYsnB_Op6PDFVuqqvUocieX6yQuIPO7ePfkrWl6U9bi-WjvkAe6nar7pYE61V7TGCsiQ7YNrT4vbQGFGtBaCQVtJY6ykkAFHq2O405A1v3TWXK6fZQrVzMSMd8xlzwxJliALN2CRXVqnRjMIWKk9CZfdcDBBRkYiZUiBojhZdFS78hQ9NI9mWFsU8DUYDxX828AEDHlIuuQZnXLQgDLjNm1xpELspA52Exa0OTCa-xXLAPb6ORC2bSzLBhV5HNfQ5LEN2EdjWB3Ha8CeEhpS3_iC3fVb-47ltWzQy1rwboS_xEnWICj2FlgdqVMYSFqP2qpQajQ7ifFwmmsVAFPrmLacFIM-UIk6XVV7Ku9MMMskhfq5e3S1qPBzm7CAhDEw1hgHFGn2AZ45AUSxYcC-AAM-st7mLZHXD39EH1r1YzDLSA9eGKxtW8PCngIEVVUeRIHb1qKhEeARn2e5x6Wn6GV52AZxAJRaGVsbG9AZXhhbXBsZS5jb20EgQEDOQEA",
+    );
+    const { key } = await importPrivateKey(cbor, true);
+    const signature = await crypto.subtle.sign(
+      { name: "RSASSA-PKCS1-v1_5" },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assert(signature != null && signature.byteLength > 0);
+  });
+  it("Imports a RS256 public key", async () => {
+    const cbor = decode(
+      "pgEDAlFoZWxsb0BleGFtcGxlLmNvbQSBAgM5AQAhQwEAASBZAQC39rfzb7mCsntRDoHf687SeuTxrQxO7A-sPfbmwS_zwLAAW3OGfhZuya8qDxoUF5ybosh74yEWOPKXZmE-ac-N8UQazh1OItA5aJILDI_gWYtkqi4-B08v-IgF_s1Au-fLll6gsQtvTOSBs6-ZYSkdVKNsLDUrp_D98nrLzgV4vydSEvwqlbt_Ykxgw6x_5ZhJIzuCvf0nMBYDr7dxQcEvxYJSARZIFNuMqJnc5iDEzCnT4C8sJOGxJqTV62nOnnvZMVEIF_zzXVWZgTPqi7D3RmCpsmD0C2lee1dV1lNf8v7dRRExESk4Wrfpm_Bdp8vFrzevWmTJyW8ezGWlbGCF",
+    );
+    const { key } = await importPublicKey(cbor);
+    const verified = await crypto.subtle.verify(
+      { name: "RSASSA-PKCS1-v1_5" },
+      key,
+      decodeBase64Url(
+        "F88zCMVUxVCQVBpT_HVEcceQ-g9q2RDm3u1olumXg-n5lFaM2S1lap8Vmb2z5wkmpf8pVryvaTJuJWiQ34A9bDLw3OvppvrBTMZxk3GocLCqRfjCNicL3AR70Vl-lHkaSNnH5iW8OT-yShAmB9OYNfqzcL3loeDNBgGV3LMqKrDu4JsDYL5v7-n4C0jwaWLeQdXQFUmtDy_-oKneOczksPDitoL9hi-T7KNGQzgAOqdBZXksdiYfouTxjqSMh38-2DCNpSHkdF-RKpeuGajXp1MDMkh9ZtCSvjJ1Lg975yxDX5txzEZZuTUznIRO31wdYhlYPQ05VshOnP5uHlm4iA",
+      ),
+      ENCODER.encode("Hello world"),
+    );
+    assert(verified);
   });
 });
