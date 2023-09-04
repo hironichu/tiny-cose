@@ -24,7 +24,7 @@ import {
   RSASSA_PSS_SHA_384,
   RSASSA_PSS_SHA_512,
 } from "./constants.ts";
-import { CBORType, decodeBase64Url } from "./deps.ts";
+import { decodeBase64Url } from "./deps.ts";
 import {
   COSEPrivateKey,
   COSEPublicKey,
@@ -37,7 +37,7 @@ import {
   RSASSA_PSS_Private_COSE_Key,
   RSASSA_PSS_Public_COSE_Key,
 } from "./types.ts";
-import { cborTypeToCOSEKey } from "./parse.ts";
+import { COSEKeyAll } from "./index.ts";
 
 function keyOps(
   ops: string[],
@@ -173,10 +173,9 @@ export async function exportPrivateKey(
 }
 
 export async function importPrivateKey(
-  cbor: CBORType,
+  key: COSEKeyAll,
   extractable?: boolean,
 ): Promise<ImportedKey> {
-  const key = cborTypeToCOSEKey(cbor);
   const key_ops: KeyUsage[] = [];
   if (key.key_ops) {
     for (const op of key.key_ops) {
@@ -377,8 +376,7 @@ export async function exportPublicKey(
   throw new Error(`Unsupported key ${jwk.alg}`);
 }
 
-export async function importPublicKey(cbor: CBORType): Promise<ImportedKey> {
-  const key = cborTypeToCOSEKey(cbor);
+export async function importPublicKey(key: COSEKeyAll): Promise<ImportedKey> {
   const key_ops: KeyUsage[] = [];
   if (key.key_ops) {
     for (const op of key.key_ops) {
@@ -526,11 +524,9 @@ export async function exportSymmetricKey(
 }
 
 export async function importSymmetricKey(
-  cbor: CBORType,
+  key: COSEKeyAll,
   extractable?: boolean,
 ): Promise<ImportedKey> {
-  const key = cborTypeToCOSEKey(cbor);
-
   if (
     key.alg != HMAC_SHA_256 && key.alg != HMAC_SHA_384 &&
     key.alg != HMAC_SHA_512

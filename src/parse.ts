@@ -44,7 +44,7 @@ import {
   RSASSA_PSS_Public_COSE_Key,
 } from "./types.ts";
 
-export function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
+export function parseCBORToCOSEKey(cbor: CBORType): COSEKeyAll {
   if (!(cbor instanceof Map)) {
     throw new Error("Unsupported CBOR input");
   }

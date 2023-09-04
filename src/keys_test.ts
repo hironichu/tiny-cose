@@ -41,6 +41,7 @@ import {
   decodeBase64Url,
 } from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
 import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.1/cbor/cbor.ts";
+import { parseCBORToCOSEKey } from "./parse.ts";
 
 const ENCODER = new TextEncoder();
 
@@ -423,7 +424,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
     );
-    const { key } = await importSymmetricKey(cbor, true);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importSymmetricKey(coseKey, true);
     const signature = await crypto.subtle.sign(
       { name: "HMAC" },
       key,
@@ -434,7 +436,8 @@ describe("Importing keys", () => {
       decodeBase64("Jl7zJByUUrh1y5b94fES52I2SwgjCmSywcvuvjywS4Y="),
     );
     (cbor as Map<number, CBORType>).delete(4);
-    const skey2 = await importSymmetricKey(cbor, false);
+    const coseKey2 = parseCBORToCOSEKey(cbor);
+    const skey2 = await importSymmetricKey(coseKey2, false);
     const signature2 = await crypto.subtle.sign(
       { name: "HMAC" },
       skey2.key,
@@ -451,21 +454,24 @@ describe("Importing keys", () => {
         "pQEEIFgg58-Wmw5lAYoVsBWNZ-Od1UsodZ-PDMPr27l95UzW1OYCUWhlbGxvQGV4YW1wbGUuY29tBIIJCgMF",
       );
       (cbor as Map<number, CBORType>).set(3, RSASSA_PKCS1_v1_5_SHA_256);
-      await importSymmetricKey(cbor, true);
+      const coseKey = parseCBORToCOSEKey(cbor);
+      await importSymmetricKey(coseKey, true);
     });
     assertRejects(async () => {
       const cbor = decode(
         "pQEBIAYhWCBMBNC6kELz0E-_DMukE1opN0PlMpI0BHryQ-Q-TuvG8CNYIAe8jNQE0LJjAwBNCF1rBPRWOH6bPvS6jgOgI76ZJyl6BIEB",
       );
       (cbor as Map<number, CBORType>).set(3, RSASSA_PKCS1_v1_5_SHA_256);
-      await importSymmetricKey(cbor, true);
+      const coseKey = parseCBORToCOSEKey(cbor);
+      await importSymmetricKey(coseKey, true);
     });
   });
   it("Imports an HS384 key", async () => {
     const cbor = decode(
       "pQEEIFgwkmqjI1J0ZqSTLs27o7gkTDM4jp7z2abse2C3nXm1C0OzPrr9beK4H5tt5mvZFhkbAlFoZWxsb0BleGFtcGxlLmNvbQSCCQoDBg==",
     );
-    const { key } = await importSymmetricKey(cbor, true);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importSymmetricKey(coseKey, true);
     const signature = await crypto.subtle.sign(
       { name: "HMAC" },
       key,
@@ -482,7 +488,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "pQEEIFhAIZEMIfF4qzuGFf_vWAXIq9VUUG7Gtva8ry3Ymci4U0yYVEMokdsp86eNUC5LjOgyiL-70t0OlohycL1YmC1qCAJRaGVsbG9AZXhhbXBsZS5jb20EggkKAwc=",
     );
-    const { key } = await importSymmetricKey(cbor, true);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importSymmetricKey(coseKey, true);
     const signature = await crypto.subtle.sign(
       { name: "HMAC" },
       key,
@@ -499,7 +506,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "rAEDIUMBAAEgWQEAt_a382-5grJ7UQ6B3-vO0nrk8a0MTuwPrD325sEv88CwAFtzhn4WbsmvKg8aFBecm6LIe-MhFjjyl2ZhPmnPjfFEGs4dTiLQOWiSCwyP4FmLZKouPgdPL_iIBf7NQLvny5ZeoLELb0zkgbOvmWEpHVSjbCw1K6fw_fJ6y84FeL8nUhL8KpW7f2JMYMOsf-WYSSM7gr39JzAWA6-3cUHBL8WCUgEWSBTbjKiZ3OYgxMwp0-AvLCThsSak1etpzp572TFRCBf8811VmYEz6ouw90ZgqbJg9AtpXntXVdZTX_L-3UURMREpOFq36ZvwXafLxa83r1pkyclvHsxlpWxghSJZAQAnk1ND8tFXGVP3nlYYyLcr5yXJCxgGg3ikrojm4AEToGyMix_5ezcSut8svmZ3E5RMlBKqujREPliL8wmw_lzZFaH33UcHJ-yhKQqgB2INWt4muAiuLe7ebEpA9e2Mg1AMp2rwiV3jIgjXkUMRzUnlxi9JBmKi42RwEUHTBd19-c3TRysGLaORsPcqpEJlFKvTNe8aeCne5uECQpvxgdDiMKU-nn3xVOEkoF6z62Lt9xbsoop8BNXtm2a9YIv-auUkOdcycOyfGhoQgZgXUF6gTUxtE6OwJwTrjXmXe1PWglstTIEKurhQcDm2AWW4oTddFtCjej_UsSie62kJnN5ZI1iA6lNZIHurpQa4KB1gAJg-G7PPAFChQjFSWSj2z374hEKDaUf5LLySHU3scaTUpXESOV6dma_8F_Z1-gQzS7jkDaWtLmEzzAhaAHcU1dvEBkSCOm3vZtP_9gH9-LNCfpfW8cImhWpe4N3XgMAhej9cY43443mu3gOAwixXjCAOUQ0kWIDI-tckE3WY9bKORlBmqw50rq50k10-Je3vmjqPvlwPdJYnvfgDn16L3dh49fWRLrYtmY2lOyrWE9aPfKZnDU9FqFaTH9Gsd3Z8Ov4EY03xkH_kAXcgtsR8FtpAoDWYp9cFhIxhQXy6_Sr_mHAOuBvqeZgOV8NVqMFWI3fHRIA_WSVYgGEJyysMi_R3Z-QU5iDY6z-Fov-6ZE2JJ1UNBcjACCKdeNYsnB_Op6PDFVuqqvUocieX6yQuIPO7ePfkrWl6U9bi-WjvkAe6nar7pYE61V7TGCsiQ7YNrT4vbQGFGtBaCQVtJY6ykkAFHq2O405A1v3TWXK6fZQrVzMSMd8xlzwxJliALN2CRXVqnRjMIWKk9CZfdcDBBRkYiZUiBojhZdFS78hQ9NI9mWFsU8DUYDxX828AEDHlIuuQZnXLQgDLjNm1xpELspA52Exa0OTCa-xXLAPb6ORC2bSzLBhV5HNfQ5LEN2EdjWB3Ha8CeEhpS3_iC3fVb-47ltWzQy1rwboS_xEnWICj2FlgdqVMYSFqP2qpQajQ7ifFwmmsVAFPrmLacFIM-UIk6XVV7Ku9MMMskhfq5e3S1qPBzm7CAhDEw1hgHFGn2AZ45AUSxYcC-AAM-st7mLZHXD39EH1r1YzDLSA9eGKxtW8PCngIEVVUeRIHb1qKhEeARn2e5x6Wn6GV52AZxAJRaGVsbG9AZXhhbXBsZS5jb20EgQEDOQEA",
     );
-    const { key } = await importPrivateKey(cbor, true);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPrivateKey(coseKey, true);
     const signature = await crypto.subtle.sign(
       { name: "RSASSA-PKCS1-v1_5" },
       key,
@@ -511,7 +519,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "pgEDAlFoZWxsb0BleGFtcGxlLmNvbQSBAgM5AQAhQwEAASBZAQC39rfzb7mCsntRDoHf687SeuTxrQxO7A-sPfbmwS_zwLAAW3OGfhZuya8qDxoUF5ybosh74yEWOPKXZmE-ac-N8UQazh1OItA5aJILDI_gWYtkqi4-B08v-IgF_s1Au-fLll6gsQtvTOSBs6-ZYSkdVKNsLDUrp_D98nrLzgV4vydSEvwqlbt_Ykxgw6x_5ZhJIzuCvf0nMBYDr7dxQcEvxYJSARZIFNuMqJnc5iDEzCnT4C8sJOGxJqTV62nOnnvZMVEIF_zzXVWZgTPqi7D3RmCpsmD0C2lee1dV1lNf8v7dRRExESk4Wrfpm_Bdp8vFrzevWmTJyW8ezGWlbGCF",
     );
-    const { key } = await importPublicKey(cbor);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPublicKey(coseKey);
     const verified = await crypto.subtle.verify(
       { name: "RSASSA-PKCS1-v1_5" },
       key,
@@ -526,7 +535,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "pwECIAEhWCD2dKUDaWhLWJ9mzZ-gcJeFgTzXmvVwGsh_-z-MnRMUHyJYINwlpbVywj_6LAUv8yACBRmEWcLeTmMsQQX4vTh083hNI1ggnuG5ksf4_br2nNDQC0cwfx2STOLiL57U04pAfYaUhNgCUWhlbGxvQGV4YW1wbGUuY29tBIEB",
     );
-    const { key } = await importPrivateKey(cbor, true);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPrivateKey(coseKey, true);
     const signature = await crypto.subtle.sign(
       { name: "ECDSA", hash: { name: "SHA-256" } },
       key,
@@ -538,7 +548,8 @@ describe("Importing keys", () => {
     const cbor = decode(
       "pgECAlFoZWxsb0BleGFtcGxlLmNvbQSBAiABIVgg9nSlA2loS1ifZs2foHCXhYE815r1cBrIf_s_jJ0TFB8iWCDcJaW1csI_-iwFL_MgAgUZhFnC3k5jLEEF-L04dPN4TQ",
     );
-    const { key } = await importPublicKey(cbor);
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPublicKey(coseKey);
     const verified = await crypto.subtle.verify(
       { name: "ECDSA", hash: { name: "SHA-256" } },
       key,

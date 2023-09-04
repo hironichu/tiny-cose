@@ -13,3 +13,4 @@ export {
   importPublicKey,
   importSymmetricKey,
 } from "./keys.ts";
+export { parseCBORToCOSEKey } from "./parse.ts";
