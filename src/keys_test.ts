@@ -522,4 +522,31 @@ describe("Importing keys", () => {
     );
     assert(verified);
   });
+  it("Imports a ES256 private key", async () => {
+    const cbor = decode(
+      "pwECIAEhWCD2dKUDaWhLWJ9mzZ-gcJeFgTzXmvVwGsh_-z-MnRMUHyJYINwlpbVywj_6LAUv8yACBRmEWcLeTmMsQQX4vTh083hNI1ggnuG5ksf4_br2nNDQC0cwfx2STOLiL57U04pAfYaUhNgCUWhlbGxvQGV4YW1wbGUuY29tBIEB",
+    );
+    const { key } = await importPrivateKey(cbor, true);
+    const signature = await crypto.subtle.sign(
+      { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assert(signature != null && signature.byteLength > 0);
+  });
+  it("Imports a ES256 public key", async () => {
+    const cbor = decode(
+      "pgECAlFoZWxsb0BleGFtcGxlLmNvbQSBAiABIVgg9nSlA2loS1ifZs2foHCXhYE815r1cBrIf_s_jJ0TFB8iWCDcJaW1csI_-iwFL_MgAgUZhFnC3k5jLEEF-L04dPN4TQ",
+    );
+    const { key } = await importPublicKey(cbor);
+    const verified = await crypto.subtle.verify(
+      { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      decodeBase64Url(
+        "ds2xLiNSQoqv3OAy-Q8l0QuZ7hLsshtNayxf9seId4Yx39xCzfzipQBuqYx0gQa6o1Ketq49Ph092qRtbwjRiQ",
+      ),
+      ENCODER.encode("Hello world"),
+    );
+    assert(verified);
+  });
 });

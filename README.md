@@ -11,7 +11,7 @@ A very incomplete COSE library for use with other `tiny-*` libraries.
 
 ## What's inside
 
-This implementation provides:
+This implementation provides (incomplete):
 
 - Deserializing public and private key objects into JavaScript `CryptoKey`s
 - Serializing JavaScript private and public `CryptoKey`s into public and private

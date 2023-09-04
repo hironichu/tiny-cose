@@ -1,7 +1,9 @@
 import {
+  EC2_CRV_ALL,
   EC2_CRV_P256,
   EC2_CRV_P384,
   EC2_CRV_P521,
+  ECDSA_ALG,
   ECDSA_SHA_256,
   ECDSA_SHA_384,
   ECDSA_SHA_512,
@@ -48,6 +50,7 @@ export function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
   }
   const kid = cbor.get(2);
   const alg = cbor.get(3);
+  const crv = cbor.get(-1);
   const key_ops = cbor.get(4);
   const kty = cbor.get(1);
   let keyOps: undefined | KEY_OPS_ALL[];
@@ -154,17 +157,54 @@ export function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
     }
   } else if (
     kty == KTY_EC2 &&
-    (alg == ECDSA_SHA_256 || alg == ECDSA_SHA_384 || alg == ECDSA_SHA_512)
+    (alg == ECDSA_SHA_256 || alg == ECDSA_SHA_384 || alg == ECDSA_SHA_512 ||
+      crv == EC2_CRV_P256 || crv == EC2_CRV_P384 || crv == EC2_CRV_P521)
   ) {
     const crv = cbor.get(-1); // Elliptic curve
     const x = cbor.get(-2); // X coordinate
     const y = cbor.get(-3); // Y coordinate
+    let ecdsaAlg: ECDSA_ALG;
+    let ecdsaCrv: EC2_CRV_ALL;
+    if (!alg && crv) {
+      ecdsaCrv = crv as EC2_CRV_ALL;
+      switch (crv) {
+        case EC2_CRV_P256:
+          ecdsaAlg = ECDSA_SHA_256;
+          break;
+        case EC2_CRV_P384:
+          ecdsaAlg = ECDSA_SHA_384;
+          break;
+        case EC2_CRV_P521:
+          ecdsaAlg = ECDSA_SHA_512;
+          break;
+        default:
+          throw new Error("Unreachable");
+      }
+    } else {
+      ecdsaAlg = alg as ECDSA_ALG;
+      switch (alg) {
+        case ECDSA_SHA_256:
+          ecdsaCrv = EC2_CRV_P256;
+          break;
+        case ECDSA_SHA_384:
+          ecdsaCrv = EC2_CRV_P384;
+          break;
+        case ECDSA_SHA_512:
+          ecdsaCrv = EC2_CRV_P521;
+          break;
+        default:
+          throw new Error("Unreachable");
+      }
+    }
 
     if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array)) {
       throw new Error("Malformed COSE key");
     }
-    if (crv != EC2_CRV_P256 && crv != EC2_CRV_P384 && crv != EC2_CRV_P521) {
-      throw new Error(`Unsupported elliptic curve ${crv}`);
+    if (
+      ecdsaCrv != EC2_CRV_P256 && ecdsaCrv != EC2_CRV_P384 &&
+      ecdsaCrv != EC2_CRV_P521
+    ) {
+      throw new Error(`Unsupported elliptic curve ${ecdsaCrv}`);
     }
     const d = cbor.get(-4); // Private key
     if (d) {
@@ -184,13 +224,13 @@ export function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
         x,
         y,
         d,
-        alg,
+        alg: ecdsaAlg,
         kty: KTY_EC2,
         kid: kid as Uint8Array,
         key_ops: keyOps as
           | (typeof KEY_OP_VERIFY | typeof KEY_OP_VERIFY)[]
           | undefined,
-        crv,
+        crv: ecdsaCrv,
       };
       return privateKey;
     } else {
@@ -206,11 +246,11 @@ export function cborTypeToCOSEKey(cbor: CBORType): COSEKeyAll {
       const publicKey: ECDSA_Public_COSE_Key = {
         x,
         y,
-        alg,
+        alg: ecdsaAlg,
         kty: KTY_EC2,
         kid: kid as Uint8Array,
         key_ops: keyOps as (typeof KEY_OP_VERIFY)[] | undefined,
-        crv,
+        crv: ecdsaCrv,
       };
       return publicKey;
     }

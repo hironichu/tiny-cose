@@ -269,7 +269,47 @@ export async function importPrivateKey(
     key.alg == ECDSA_SHA_256 || key.alg == ECDSA_SHA_384 ||
     key.alg == ECDSA_SHA_512
   ) {
-    throw new Error("Unimplemented");
+    const privateKey = key as ECDSA_Private_COSE_Key;
+    if (!privateKey.d) {
+      throw new Error(
+        "Cannot import ECDSA private key, components are missing",
+      );
+    }
+    let alg: string;
+    let namedCurve: string;
+    switch (key.alg) {
+      case ECDSA_SHA_256:
+        alg = "ES256";
+        namedCurve = "P-256";
+        break;
+      case ECDSA_SHA_384:
+        alg = "ES384";
+        namedCurve = "P-384";
+        break;
+      case ECDSA_SHA_512:
+        alg = "ES512";
+        namedCurve = "P-521";
+        break;
+    }
+    const jwk: JsonWebKey = {
+      alg,
+      kty: "EC",
+      key_ops,
+      x: encodeBase64Url(key.x),
+      y: encodeBase64Url(key.y),
+      d: encodeBase64Url(privateKey.d),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      {
+        name: "ECDSA",
+        namedCurve,
+      },
+      extractable || false,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
   } else if (key.alg == EDDSA) {
     throw new Error("Unimplemented");
   } else {
@@ -413,7 +453,40 @@ export async function importPublicKey(cbor: CBORType): Promise<ImportedKey> {
     key.alg == ECDSA_SHA_256 || key.alg == ECDSA_SHA_384 ||
     key.alg == ECDSA_SHA_512
   ) {
-    throw new Error("Unimplemented");
+    let alg: string;
+    let namedCurve: string;
+    switch (key.alg) {
+      case ECDSA_SHA_256:
+        alg = "ES256";
+        namedCurve = "P-256";
+        break;
+      case ECDSA_SHA_384:
+        alg = "ES384";
+        namedCurve = "P-384";
+        break;
+      case ECDSA_SHA_512:
+        alg = "ES512";
+        namedCurve = "P-521";
+        break;
+    }
+    const jwk: JsonWebKey = {
+      alg,
+      kty: "EC",
+      key_ops,
+      x: encodeBase64Url(key.x),
+      y: encodeBase64Url(key.y),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      {
+        name: "ECDSA",
+        namedCurve,
+      },
+      true,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
   } else if (key.alg == EDDSA) {
     throw new Error("Unimplemented");
   } else {
