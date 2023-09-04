@@ -24,6 +24,9 @@ await build({
       url: "https://github.com/levischuck/tiny-cose/issues",
     },
   },
+  compilerOptions: {
+    lib: ["ES2021", "DOM"],
+  },
   postBuild() {
     // steps to run after building and before running the tests
     Deno.copyFileSync("LICENSE.txt", "npm/LICENSE");
