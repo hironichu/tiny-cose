@@ -15,8 +15,10 @@ import {
   KEY_OP_VERIFY,
   KEY_OPS_ALL,
   KTY_EC2,
+  KTY_OKP,
   KTY_RSA,
   KTY_SYMMETRIC,
+  OKP_CRV_ED25519,
   RSASSA_PKCS1_v1_5_SHA_256,
   RSASSA_PKCS1_v1_5_SHA_384,
   RSASSA_PKCS1_v1_5_SHA_512,
@@ -31,6 +33,8 @@ import {
   COSESymmetricKey,
   ECDSA_Private_COSE_Key,
   ECDSA_Public_COSE_Key,
+  EDDSA_Private_COSE_Key,
+  EDDSA_Public_COSE_Key,
   HMAC_COSE_Key,
   RSASSA_PKCS1_v1_5_Private_COSE_Key,
   RSASSA_PKCS1_v1_5_Public_COSE_Key,
@@ -166,6 +170,19 @@ export async function exportPrivateKey(
       ) as (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
       ...ec2Public(jwk as JWK_EC2_Public),
       d: decodeBase64Url(jwk.d),
+    };
+    return out;
+  } else if (jwk.x && jwk.d && jwk.kty == "OKP" && jwk.crv == "Ed25519") {
+    const out: EDDSA_Private_COSE_Key = {
+      kty: KTY_OKP,
+      crv: OKP_CRV_ED25519,
+      alg: EDDSA,
+      x: decodeBase64Url(jwk.x),
+      d: decodeBase64Url(jwk.d),
+      key_ops: keyOps(
+        jwk.key_ops as string[],
+        false,
+      ) as (typeof KEY_OP_SIGN | typeof KEY_OP_VERIFY)[],
     };
     return out;
   }
@@ -310,7 +327,25 @@ export async function importPrivateKey(
     );
     return { key: cryptoKey, kid: key.kid };
   } else if (key.alg == EDDSA) {
-    throw new Error("Unimplemented");
+    if (key.crv != OKP_CRV_ED25519) {
+      throw new Error("Unsupported EDDSA curve");
+    }
+    const privateKey = key as EDDSA_Private_COSE_Key;
+    const jwk: JsonWebKey = {
+      crv: "Ed25519",
+      kty: "OKP",
+      key_ops,
+      x: encodeBase64Url(key.x),
+      d: encodeBase64Url(privateKey.d),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "Ed25519" },
+      extractable || false,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
   } else {
     throw new Error("Key algorithm not supported");
   }
@@ -370,6 +405,18 @@ export async function exportPublicKey(
         false,
       ) as (typeof KEY_OP_VERIFY)[],
       ...ec2Public(jwk as JWK_EC2_Public),
+    };
+    return out;
+  } else if (jwk.kty == "OKP" && jwk.crv == "Ed25519" && jwk.x) {
+    const out: EDDSA_Public_COSE_Key = {
+      kty: KTY_OKP,
+      crv: OKP_CRV_ED25519,
+      alg: EDDSA,
+      x: decodeBase64Url(jwk.x),
+      key_ops: keyOps(
+        jwk.key_ops as string[],
+        false,
+      ) as (typeof KEY_OP_VERIFY)[],
     };
     return out;
   }
@@ -486,7 +533,23 @@ export async function importPublicKey(key: COSEKeyAll): Promise<ImportedKey> {
     );
     return { key: cryptoKey, kid: key.kid };
   } else if (key.alg == EDDSA) {
-    throw new Error("Unimplemented");
+    if (key.crv != OKP_CRV_ED25519) {
+      throw new Error("Unsupported EDDSA curve");
+    }
+    const jwk: JsonWebKey = {
+      crv: "Ed25519",
+      kty: "OKP",
+      key_ops,
+      x: encodeBase64Url(key.x),
+    };
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "Ed25519" },
+      true,
+      key_ops,
+    );
+    return { key: cryptoKey, kid: key.kid };
   } else {
     throw new Error("Key algorithm not supported");
   }

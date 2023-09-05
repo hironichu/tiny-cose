@@ -282,15 +282,11 @@ export function parseCBORToCOSEKey(cbor: CBORType): COSEKeyAll {
         | undefined,
     };
     return symmetricKey;
-  } else if (kty == KTY_OKP && alg == EDDSA) {
-    const crv = cbor.get(-1); // Elliptic curve
+  } else if (kty == KTY_OKP && cbor.get(-1) == OKP_CRV_ED25519) {
     const x = cbor.get(-2); // Public X coordinate
 
     if (!(x instanceof Uint8Array)) {
       throw new Error("Malformed COSE key");
-    }
-    if (crv != OKP_CRV_ED25519) {
-      throw new Error(`Unsupported elliptic curve ${crv}`);
     }
     const d = cbor.get(-4); // Private key
     if (d) {
@@ -309,11 +305,11 @@ export function parseCBORToCOSEKey(cbor: CBORType): COSEKeyAll {
       const privateKey: EDDSA_Private_COSE_Key = {
         x,
         d,
-        alg,
+        alg: EDDSA,
         kty: KTY_OKP,
         kid: kid as Uint8Array,
         key_ops: keyOps as [typeof KEY_OP_VERIFY] | undefined,
-        crv,
+        crv: OKP_CRV_ED25519,
       };
       return privateKey;
     } else {
@@ -328,11 +324,11 @@ export function parseCBORToCOSEKey(cbor: CBORType): COSEKeyAll {
       }
       const publicKey: EDDSA_Public_COSE_Key = {
         x,
-        alg,
+        alg: EDDSA,
         kty: KTY_OKP,
         kid: kid as Uint8Array,
         key_ops: keyOps as [typeof KEY_OP_VERIFY] | undefined,
-        crv,
+        crv: OKP_CRV_ED25519,
       };
       return publicKey;
     }

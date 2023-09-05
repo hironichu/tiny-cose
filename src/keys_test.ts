@@ -18,6 +18,7 @@ import {
   EC2_CRV_P384,
   ECDSA_SHA_256,
   ECDSA_SHA_384,
+  EDDSA,
   HMAC_SHA_256,
   HMAC_SHA_384,
   HMAC_SHA_512,
@@ -26,8 +27,10 @@ import {
   KEY_OP_SIGN,
   KEY_OP_VERIFY,
   KTY_EC2,
+  KTY_OKP,
   KTY_RSA,
   KTY_SYMMETRIC,
+  OKP_CRV_ED25519,
   RSASSA_PKCS1_v1_5_SHA_256,
   RSASSA_PKCS1_v1_5_SHA_384,
   RSASSA_PKCS1_v1_5_SHA_512,
@@ -404,6 +407,37 @@ describe("Generating keys", () => {
       );
     });
   });
+
+  it("Export a dynamically Ed25519 generated key", async () => {
+    const key = await crypto.subtle.generateKey(
+      {
+        name: "Ed25519",
+      },
+      true,
+      ["sign", "verify"],
+    ) as CryptoKeyPair;
+    const exportedPrivate = await exportPrivateKey(
+      key.privateKey,
+      ENCODER.encode("test@example.com"),
+    );
+    assertEquals(exportedPrivate.kty, KTY_OKP);
+    assertEquals(exportedPrivate.key_ops, [KEY_OP_SIGN]);
+    assertEquals(exportedPrivate.alg, EDDSA);
+    if (exportedPrivate.alg == EDDSA) {
+      assertEquals(exportedPrivate.crv, OKP_CRV_ED25519);
+    }
+
+    const exportedPublic = await exportPublicKey(
+      key.publicKey,
+      ENCODER.encode("test@example.com"),
+    );
+    assertEquals(exportedPublic.kty, KTY_OKP);
+    assertEquals(exportedPublic.key_ops, [KEY_OP_VERIFY]);
+    assertEquals(exportedPublic.alg, EDDSA);
+    if (exportedPublic.alg == EDDSA) {
+      assertEquals(exportedPublic.crv, OKP_CRV_ED25519);
+    }
+  });
 });
 
 // Keys come from https://github.com/LeviSchuck/cose-examples/tree/main
@@ -555,6 +589,35 @@ describe("Importing keys", () => {
       key,
       decodeBase64Url(
         "ds2xLiNSQoqv3OAy-Q8l0QuZ7hLsshtNayxf9seId4Yx39xCzfzipQBuqYx0gQa6o1Ketq49Ph092qRtbwjRiQ",
+      ),
+      ENCODER.encode("Hello world"),
+    );
+    assert(verified);
+  });
+  it("Imports a Ed25519 private key", async () => {
+    const cbor = decode(
+      "pQEBIAYhWCBMBNC6kELz0E-_DMukE1opN0PlMpI0BHryQ-Q-TuvG8CNYIAe8jNQE0LJjAwBNCF1rBPRWOH6bPvS6jgOgI76ZJyl6BIEB",
+    );
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPrivateKey(coseKey, true);
+    const signature = await crypto.subtle.sign(
+      { name: "Ed25519" },
+      key,
+      ENCODER.encode("Hello world"),
+    );
+    assert(signature != null && signature.byteLength > 0);
+  });
+  it("Imports an Ed25519 public key", async () => {
+    const cbor = decode(
+      "pAEBBIECIAYhWCBMBNC6kELz0E-_DMukE1opN0PlMpI0BHryQ-Q-TuvG8A",
+    );
+    const coseKey = parseCBORToCOSEKey(cbor);
+    const { key } = await importPublicKey(coseKey);
+    const verified = await crypto.subtle.verify(
+      { name: "Ed25519" },
+      key,
+      decodeBase64Url(
+        "NXTlvCErNKKo2hBxJlniLh7NlBXsTiKXAQROfULE3JPmwYjLSTneTU-pvCTHKtC-zAXrltoOgQ7GuT3-jYT-Aw",
       ),
       ENCODER.encode("Hello world"),
     );
