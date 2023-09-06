@@ -43,7 +43,7 @@ import {
   decodeBase64,
   decodeBase64Url,
 } from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
-import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.1/cbor/cbor.ts";
+import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.2/cbor/cbor.ts";
 import { parseCBORToCOSEKey } from "./parse.ts";
 
 const ENCODER = new TextEncoder();
