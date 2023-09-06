@@ -1,4 +1,3 @@
-import { encodeBase64Url } from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
 import {
   EC2_CRV_P256,
   EC2_CRV_P384,
@@ -26,7 +25,7 @@ import {
   RSASSA_PSS_SHA_384,
   RSASSA_PSS_SHA_512,
 } from "./constants.ts";
-import { decodeBase64Url } from "./deps.ts";
+import { decodeBase64Url, encodeBase64Url } from "./deps.ts";
 import {
   COSEPrivateKey,
   COSEPublicKey,

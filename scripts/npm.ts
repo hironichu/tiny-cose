@@ -15,6 +15,10 @@ await build({
       name: "@levischuck/tiny-cbor",
       version: "0.2.2",
     },
+    "https://deno.land/x/tiny_encodings@0.2.1/index.ts": {
+      name: "@levischuck/tiny-encodings",
+      version: "0.2.1",
+    },
   },
   package: {
     // package.json properties
