@@ -1,5 +1,17 @@
 {
-  "version": "2",
+  "version": "4",
+  "specifiers": {
+    "jsr:@levischuck/tiny-cbor@~0.2.11": "0.2.11",
+    "jsr:@std/encoding@^1.0.7": "1.0.7"
+  },
+  "jsr": {
+    "@levischuck/tiny-cbor@0.2.11": {
+      "integrity": "85163de7eef1c48c377723f899e0df524638c3b9f8a045a1f6a1f04977ab7cf9"
+    },
+    "@std/encoding@1.0.7": {
+      "integrity": "f631247c1698fef289f2de9e2a33d571e46133b38d042905e3eac3715030a82d"
+    }
+  },
   "remote": {
     "https://deno.land/std@0.140.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",
     "https://deno.land/std@0.140.0/_util/os.ts": "3b4c6e27febd119d36a416d7a97bd3b0251b77c88942c8f16ee5953ea13e2e49",
@@ -129,5 +141,11 @@
     "https://deno.land/x/ts_morph@18.0.0/common/typescript.js": "d5c598b6a2db2202d0428fca5fd79fc9a301a71880831a805d778797d2413c59",
     "https://deno.land/x/wasmbuild@0.13.0/cache.ts": "89eea5f3ce6035a1164b3e655c95f21300498920575ade23161421f5b01967f4",
     "https://deno.land/x/wasmbuild@0.13.0/loader.ts": "d98d195a715f823151cbc8baa3f32127337628379a02d9eb2a3c5902dbccfc02"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@levischuck/tiny-cbor@~0.2.11",
+      "jsr:@std/encoding@^1.0.7"
+    ]
   }
 }

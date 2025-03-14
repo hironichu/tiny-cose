@@ -8,5 +8,9 @@
   },
   "fmt": {
     "exclude": ["npm"]
+  },
+  "imports": {
+    "@levischuck/tiny-cbor": "jsr:@levischuck/tiny-cbor@^0.2.11",
+    "@std/encoding": "jsr:@std/encoding@^1.0.7"
   }
 }
