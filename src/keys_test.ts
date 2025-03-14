@@ -39,11 +39,8 @@ import {
   RSASSA_PSS_SHA_512,
 } from "./constants.ts";
 import { CBORType } from "./deps.ts";
-import {
-  decodeBase64,
-  decodeBase64Url,
-} from "https://deno.land/x/tiny_encodings@0.2.1/encoding.ts";
-import { decodeCBOR } from "https://deno.land/x/tiny_cbor@0.2.2/cbor/cbor.ts";
+import { decodeBase64, decodeBase64Url } from "@std/encoding";
+import { decodeCBOR } from "@levischuck/tiny-cbor";
 import { parseCBORToCOSEKey } from "./parse.ts";
 
 const ENCODER = new TextEncoder();
